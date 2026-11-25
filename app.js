@@ -31,11 +31,13 @@ Promise.all([
   d3.csv("data/trajectory.csv", d3.autoType),
   d3.csv("data/depth_dispatches.csv", d3.autoType),
   d3.csv("data/call_edges.csv", d3.autoType),
-]).then(([drv, fns, traj, dep, edg]) => {
+  d3.json("data/meta.json"),
+]).then(([drv, fns, traj, dep, edg, meta]) => {
+  S.meta = meta;
   S.drivers = drv.filter(d => d.total > 0);
   S.funcs = fns;
   S.depth = dep;
-  S.END = d3.max(traj, d => d.minute) || 1;
+  S.END = meta.end_min || d3.max(traj, d => d.minute) || 1;   /* 캠페인 종료 시각 */
 
   /* 드라이버별 누적 커버리지 계단 — 함수별 최신값을 더해 간다 */
   for (const [name, rows] of d3.group(traj, d => d.driver)) {
@@ -65,7 +67,11 @@ Promise.all([
 
   const act = S.drivers.filter(d => d.last_gain_min !== "" && d.last_gain_min != null);
   d3.select("#meta").text(
-    `${fmt(fns.length)} functions · ${S.drivers.length} drivers · ${act.length} 개가 커버리지를 얻었다 · 30.4 h`);
+    `${fmt(fns.length)} functions · ${S.drivers.length} drivers · ${act.length} 개가 커버리지를 얻었다 · ${(meta.end_min / 60).toFixed(1)} h`);
+  d3.select("#run").html(
+    `run <b>${meta.run}</b> · ${meta.arch} · ${(meta.end_min / 60).toFixed(1)} h · ${fmt(meta.execs)} execs`);
+  d3.select("#gsrc").text(`gained: ${meta.gained_source}`);
+  d3.select("#axlab").html(`coverage over ${(meta.end_min / 60).toFixed(1)} h &nbsp;&rarr;`);
   d3.select("#fstat").text(
     `gained 측정 ${fmt(fns.filter(f => f.gained !== "" && f.gained != null).length)} / ${fmt(fns.length)} 함수`);
 

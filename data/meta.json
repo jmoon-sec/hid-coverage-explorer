@@ -1,0 +1,14 @@
+{
+ "run": "tp-r1",
+ "arch": "x86_64",
+ "kernel": "7.2.0-g66498c75b4f8",
+ "started": "2026-11-20T15:05:21+09:00",
+ "ended": "2026-11-21T21:35:01+09:00",
+ "end_min": 1824.6,
+ "execs": 2031157,
+ "corpus": 366,
+ "note_execs": "logs/tp-r1.log 마지막 상태줄 (2026-11-21 21:35:01)",
+ "note_end_min": "funcseries-tp-r1.jsonl 마지막 elapsed 109475 s",
+ "gained_source": "2026-10-08 kcov A/B · arm64 · 다른 런",
+ "edges_source": "vmlinux 직접 call · 커버리지는 funccover-snapshot.csv(tp-r1)"
+}
