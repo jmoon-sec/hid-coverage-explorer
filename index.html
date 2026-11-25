@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deferred-Work Coverage Frontier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --panel:#f7f8fa; --line:#dfe3e8; --ink:#14181d; --mute:#6b7682;
+  --accent:#1457b8;          /* 선택·강조 */
+  --cold:#d4761a;            /* 식음 */
+  --warm:#2d7dd2;            /* 아직 움직임 */
+  --gain:#1457b8;            /* 추적으로 추가된 PC */
+  --base:#c3cad2;            /* 추적 없이 닿은 PC */
+  --full:#1457b8; --partial:#7fb0e8; --none:#e4e8ec;
+  --bug:#b3261e;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg); color:var(--ink); font-size:13px; overflow:hidden;
+}
+#app{display:flex; flex-direction:column; height:100vh}
+
+header{
+  padding:10px 16px; border-bottom:1px solid var(--line);
+  display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+}
+header h1{font-size:15px; font-weight:700; margin:0; letter-spacing:-.01em}
+header .meta{color:var(--mute); font-size:11.5px}
+header .chips{margin-left:auto; display:flex; gap:6px; align-items:center}
+.chip{
+  font-size:11px; padding:3px 9px; border:1px solid var(--line); border-radius:999px;
+  background:var(--panel); color:var(--mute); cursor:pointer; white-space:nowrap;
+}
+.chip.on{background:var(--accent); border-color:var(--accent); color:#fff}
+.chip.clear{color:var(--bug); border-color:#f0c9c6; background:#fdf3f2}
+
+main{flex:1; display:grid; grid-template-columns:minmax(560px,1.35fr) minmax(420px,1fr); min-height:0}
+section{display:flex; flex-direction:column; min-height:0; min-width:0}
+#right{border-left:1px solid var(--line); display:grid; grid-template-rows:1fr 1fr; min-height:0}
+#viewC{border-top:1px solid var(--line)}
+
+.head{padding:9px 14px 7px; display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.head .tag{
+  font-size:10px; font-weight:700; letter-spacing:.09em; color:#fff;
+  background:var(--ink); padding:2px 6px; border-radius:3px;
+}
+.head h2{font-size:13px; margin:0; font-weight:600}
+.head .sub{font-size:11px; color:var(--mute)}
+.head .sortbar{margin-left:auto; display:flex; gap:4px}
+.sortbtn{
+  font-size:10.5px; padding:2px 7px; border:1px solid var(--line);
+  background:#fff; border-radius:4px; cursor:pointer; color:var(--mute);
+}
+.sortbtn.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+
+.scroll{overflow-y:auto; overflow-x:hidden; flex:1; padding:0 8px 10px 14px}
+.scroll::-webkit-scrollbar{width:9px}
+.scroll::-webkit-scrollbar-thumb{background:#cfd6dd; border-radius:9px}
+
+.colhdr{
+  display:grid; grid-template-columns:132px 1fr 64px 76px 48px;
+  gap:8px; align-items:end; padding:0 6px 4px;
+  font-size:9.5px; color:var(--mute); letter-spacing:.03em;
+  position:sticky; top:0; background:var(--bg); z-index:2;
+  border-bottom:1px solid var(--line);
+}
+.row{
+  display:grid; grid-template-columns:132px 1fr 64px 76px 48px;
+  gap:8px; align-items:center; padding:2px 6px; border-radius:4px; cursor:pointer;
+}
+.row:hover{background:var(--panel)}
+.row.sel{background:#e8f0fb; box-shadow:inset 2px 0 0 var(--accent)}
+.row.dim{opacity:.3}
+.rname{
+  font-family:var(--mono); font-size:10.5px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.rnum{font-family:var(--mono); font-size:10px; color:var(--mute); text-align:right}
+.rbug{font-family:var(--mono); font-size:10px; text-align:right; color:var(--bug); font-weight:600}
+
+.empty{
+  display:flex; align-items:center; justify-content:center; height:100%;
+  color:var(--mute); font-size:12px; text-align:center; padding:0 30px; line-height:1.6;
+}
+svg{display:block}
+.tip{
+  position:fixed; pointer-events:none; background:#14181d; color:#fff;
+  font-size:11px; padding:6px 9px; border-radius:5px; opacity:0; transition:opacity .09s;
+  z-index:50; font-family:var(--mono); line-height:1.5; max-width:300px;
+}
+.tip b{font-family:Inter,sans-serif; font-weight:600}
+.legend{
+  padding:5px 14px 9px; font-size:10.5px; color:var(--mute);
+  display:flex; gap:14px; flex-wrap:wrap; align-items:center;
+}
+.sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px}
+footer{
+  border-top:1px solid var(--line); padding:5px 16px; font-size:10.5px; color:var(--mute);
+  display:flex; gap:16px; flex-wrap:wrap;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Deferred-Work Coverage Frontier</h1>
+    <span class="meta" id="meta">loading…</span>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <main>
+    <section id="viewA">
+      <div class="head">
+        <span class="tag">A</span>
+        <h2>Campaign Pulse</h2>
+        <span class="sub">드라이버가 아직 커버리지를 얻고 있는가, 그리고 얼마나 남았는가</span>
+        <div class="sortbar" id="sortA"></div>
+      </div>
+      <div class="colhdr">
+        <div>driver</div>
+        <div>coverage over 30.4 h &nbsp;→</div>
+        <div style="text-align:right">left</div>
+        <div style="text-align:right">functions</div>
+        <div style="text-align:right">bugs</div>
+      </div>
+      <div class="scroll" id="rowsA"></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--warm)"></span>최근 1시간 내 획득</span>
+        <span><span class="sw" style="background:var(--cold)"></span>식음</span>
+        <span><span class="sw" style="background:var(--full)"></span>full</span>
+        <span><span class="sw" style="background:var(--partial)"></span>partial</span>
+        <span><span class="sw" style="background:var(--none)"></span>none</span>
+      </div>
+    </section>
+
+    <section id="right">
+      <section id="viewB">
+        <div class="head">
+          <span class="tag">B</span>
+          <h2>Call Graph</h2>
+          <span class="sub">커버된 코드가 어디서 멈추는가</span>
+          <div class="sortbar" id="sortB"></div>
+        </div>
+        <div id="plotB" style="flex:1;min-height:0"></div>
+        <div class="legend" style="padding:3px 14px 6px">
+          <span><span class="sw" style="background:var(--none)"></span>0%</span>
+          <span><span class="sw" style="background:#b9d4f2"></span>≤50%</span>
+          <span><span class="sw" style="background:#5e9ae0"></span>&gt;50%</span>
+          <span><span class="sw" style="background:var(--full)"></span>100%</span>
+          <span><span class="sw" style="background:var(--cold)"></span>경계 — 여기서 한 번만 더 호출하면 닿는다</span>
+          <span><span class="sw" style="background:#7a4fd1"></span>워크큐 실행</span>
+        </div>
+      </section>
+
+      <section id="viewC">
+        <div class="head">
+          <span class="tag">C</span>
+          <h2>Instrumentation Payoff</h2>
+          <span class="sub">추적을 이어붙여 추가로 잡힌 PC와 그곳의 결함</span>
+          <div class="sortbar" id="sortC"></div>
+        </div>
+        <div id="plotC" style="flex:1;min-height:0;overflow-y:auto"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <span>run <b>tp-r1</b> · x86_64 · 30.4 h · 2,028,172 execs</span>
+    <span>gained: 2026-10-08 kcov A/B (arm64) — 다른 런</span>
+    <span>call edges: vmlinux 직접 call (간접 호출 제외)</span>
+    <span id="fstat"></span>
+  </footer>
+</div>
+<div class="tip" id="tip"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
