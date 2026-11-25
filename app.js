@@ -378,7 +378,7 @@ function renderC() {
   rows.sort((a, b) => (+b[S.sortC] || 0) - (+a[S.sortC] || 0));
   if (!rows.length) { host.append("div").attr("class", "empty").text("측정된 구간이 없다"); return; }
 
-  const rh = 17, m = { t: 8, r: 96, b: 22, l: 132 };
+  const rh = 17, m = { t: 8, r: 96, b: 34, l: 132 };   /* 축 눈금과 캡션이 겹치지 않게 */
   const H = m.t + rows.length * rh + m.b;
   const svg = host.append("svg").attr("width", W).attr("height", H);
   const x = d3.scaleLinear([0, d3.max(rows, d => +d.cov_trace_on)], [m.l, W - m.r]);
